@@ -1,6 +1,9 @@
 # Allowlist for the Alquimia read-only MCP.
 # Only used when auth is enabled (MCP_AUTH_ISSUER is set).
-# Users are keyed by the 'email' claim (falls back to 'sub' if no email in token).
+# Users are keyed by the token identity: the 'email' claim if present, else the
+# WorkOS 'sub' (user id). NOTE: WorkOS access tokens currently carry NO email,
+# only the sub, so entries must use the sub (user_01...). Capture each person's
+# sub from the server logs on their first login attempt.
 # NO _default entry on purpose: any authenticated user not listed below is DENIED.
 
 roles:
@@ -10,7 +13,8 @@ roles:
     operations: ["select"]
 
 users:
-  data@alquimiafruits.com:      # Esteban
+  user_01M26N80PFZKEJ5SY5SF3HVJ74:   # Bruno (WorkOS sub)
     role: reader
-  pablo@alquimiafruits.com:     # Pablo
-    role: reader
+  # Esteban y Pablo: pendiente su sub (que intenten loguear una vez y lo leo del log)
+  # data@alquimiafruits.com  -> reemplazar por su user_0... cuando lo tengamos
+  # pablo@alquimiafruits.com -> idem
