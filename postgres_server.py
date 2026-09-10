@@ -45,6 +45,7 @@ class ServerConfig:
     auth_issuer: Optional[str] = None
     auth_audience: Optional[str] = None
     auth_jwks_url: Optional[str] = None
+    auth_resource_url: Optional[str] = None
     # Permissions
     permissions_file: Optional[str] = None
 
@@ -84,6 +85,7 @@ def load_config() -> ServerConfig:
         auth_issuer=os.getenv("MCP_AUTH_ISSUER"),
         auth_audience=os.getenv("MCP_AUTH_AUDIENCE"),
         auth_jwks_url=os.getenv("MCP_AUTH_JWKS_URL"),
+        auth_resource_url=os.getenv("MCP_RESOURCE_URL"),
         permissions_file=args.permissions,
     )
 
@@ -291,8 +293,9 @@ class JWKSTokenVerifier:
                 token,
                 signing_key.key,
                 algorithms=["RS256", "ES256"],
-                audience=self.audience,
+                audience=self.audience or None,
                 issuer=self.issuer,
+                options={"verify_aud": bool(self.audience)},
             )
             return AccessToken(
                 token=token,
@@ -324,9 +327,10 @@ def _build_server() -> FastMCP:
         )
         from mcp.server.auth.settings import AuthSettings
         from pydantic import AnyHttpUrl
+        resource_url = _config.auth_resource_url or f"http://{_config.host}:{_config.port}"
         kwargs["auth"] = AuthSettings(
             issuer_url=AnyHttpUrl(_config.auth_issuer),
-            resource_server_url=AnyHttpUrl(f"http://{_config.host}:{_config.port}"),
+            resource_server_url=AnyHttpUrl(resource_url),
             required_scopes=[],
         )
         logger.info("Auth enabled — issuer: %s", _config.auth_issuer)
@@ -437,7 +441,11 @@ async def query(
         if auth_token:
             try:
                 payload = pyjwt.decode(auth_token.token, options={"verify_signature": False})
-                user_id = payload.get("sub")
+                user_id = payload.get("email") or payload.get("sub")
+                logger.info(
+                    "Auth claims — email=%s sub=%s → allowlist key=%s",
+                    payload.get("email"), payload.get("sub"), user_id,
+                )
             except Exception:
                 pass
 
