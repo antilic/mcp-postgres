@@ -10,5 +10,7 @@ roles:
     operations: ["select"]
 
 users:
-  bcippitelli@gmail.com:
+  data@alquimiafruits.com:      # Esteban
+    role: reader
+  pablo@alquimiafruits.com:     # Pablo
     role: reader
