@@ -277,10 +277,11 @@ except ImportError:
 class JWKSTokenVerifier:
     """Verify JWTs against a JWKS endpoint."""
 
-    def __init__(self, jwks_url: str, audience: str, issuer: str):
+    def __init__(self, jwks_url: str, audience: str, issuer: str, permissions: Optional["Permissions"] = None):
         self.jwks_url = jwks_url
         self.audience = audience
         self.issuer = issuer
+        self.permissions = permissions
         self._jwk_client = PyJWKClient(jwks_url) if HAS_JWT else None
 
     async def verify_token(self, token: str) -> Optional[AccessToken]:
@@ -297,14 +298,28 @@ class JWKSTokenVerifier:
                 issuer=self.issuer,
                 options={"verify_aud": bool(self.audience)},
             )
-            return AccessToken(
-                token=token,
-                client_id=payload.get("azp", payload.get("client_id", "unknown")),
-                scopes=payload.get("scope", "").split(),
-            )
         except Exception as e:
             logger.debug("Token verification failed: %s", e)
             return None
+
+        # Allowlist enforcement (fail closed). When a permissions file defines
+        # users, ONLY those identities may connect — any other authenticated
+        # Google account is rejected here, before it can reach any tool.
+        user_id = payload.get("email") or payload.get("sub")
+        if self.permissions and self.permissions.users:
+            if not user_id or self.permissions.get_role_for_user(user_id) is None:
+                logger.warning(
+                    "Rejected non-allowlisted user: email=%s sub=%s",
+                    payload.get("email"), payload.get("sub"),
+                )
+                return None
+        logger.info("Authorized user: %s", user_id)
+
+        return AccessToken(
+            token=token,
+            client_id=payload.get("azp", payload.get("client_id", "unknown")),
+            scopes=payload.get("scope", "").split(),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -324,6 +339,7 @@ def _build_server() -> FastMCP:
             jwks_url=jwks_url,
             audience=_config.auth_audience or "",
             issuer=_config.auth_issuer,
+            permissions=load_permissions(_config.permissions_file),
         )
         from mcp.server.auth.settings import AuthSettings
         from pydantic import AnyHttpUrl
