@@ -17,5 +17,6 @@ users:
     role: reader
   user_01M2MRQANS66K7HF1VBB7MPRE0:   # Pablo Cousiño (pablo@alquimiafruits.com, WorkOS sub, capturado 16/09/2026)
     role: reader
-  # Esteban y Martín: pendiente su sub (que intenten loguear una vez y lo leo del log)
-  # data@alquimiafruits.com  -> reemplazar por su user_0... cuando lo tengamos
+  user_01M3543DBJSPY017HF5BJHKTWH:   # Esteban (data@alquimiafruits.com, WorkOS sub, capturado 23/09/2026)
+    role: reader
+  # Martín: pendiente su sub (que intente loguear una vez y lo leo del log)
