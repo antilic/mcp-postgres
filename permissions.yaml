@@ -21,3 +21,5 @@ users:
     role: reader
   user_01M2R64RPQZ3SJ3A5WZ2VWRKHV:   # Martín (WorkOS sub, capturado 30/09/2026 del log)
     role: reader
+  user_01M4ZRYXQWC7YXB5BG0KXY0VVW:   # Nicole (administración, WorkOS sub, capturado 15/10/2026 del log, PM #1187)
+    role: reader
